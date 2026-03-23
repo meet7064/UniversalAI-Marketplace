@@ -10,7 +10,10 @@ import {
   LogOut, 
   Menu, 
   UserCircle,
-  Bot
+  Bot,
+  Activity,
+  Layers,
+  Calculator
 } from "lucide-react";
 import { useAdminStore } from "@/store/admin-store";
 import { Button } from "@/components/ui/button";
@@ -35,7 +38,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { name: "Overview", href: "/admin", icon: LayoutDashboard },
     { name: "Fleet Command", href: "/admin/commerce/fleet", icon: Package },
+    { name: "Accessories", href: "/admin/commerce/accessories", icon: Layers },
     { name: "Service Ops", href: "/admin/commerce/service", icon: Wrench },
+    { name: "Analytics", href: "/admin/analytics", icon: Activity },
+    { name: "Appraisal", href: "/admin/appraisal", icon: Calculator },
     { name: "System Settings", href: "/admin/settings", icon: Settings },
   ];
 
@@ -45,7 +51,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className={`border-r border-zinc-800/60 bg-zinc-950 transition-all duration-300 flex flex-col ${isSidebarCollapsed ? "w-16" : "w-64"}`}>
         <div className="h-16 flex items-center justify-center border-b border-zinc-800/60 px-4">
           <Bot className="text-blue-500 shrink-0" size={24} />
-          {!isSidebarCollapsed && <span className="ml-3 font-bold tracking-wide">V_SHOP<span className="text-blue-500">OS</span></span>}
+          {!isSidebarCollapsed && <span className="ml-3 font-bold tracking-wide">UniversalAI<span className="text-blue-500"> Admin</span></span>}
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-zinc-400 hover:text-zinc-100">
+              <Menu size={20} />
+          </Button>
         </div>
         
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1 text-sm font-medium">
@@ -78,9 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Top Header */}
         <header className="h-16 border-b border-zinc-800/60 bg-zinc-950 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-zinc-400 hover:text-zinc-100">
-              <Menu size={20} />
-            </Button>
+            
             <span className="font-medium text-zinc-200">Command Center</span>
           </div>
 
