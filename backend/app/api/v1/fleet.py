@@ -9,6 +9,8 @@ from fastapi import File, UploadFile
 from bson import ObjectId
 from app.schemas.asset_schema import AssetCreate, AssetResponse, AssetUpdate
 from app.db.mongodb import get_database
+import uuid # <-- Make sure this is imported at the top of fleet.py!
+from typing import List
 
 router = APIRouter()
 
@@ -104,27 +106,32 @@ async def update_asset(
 @router.post("/{asset_id}/image", status_code=status.HTTP_200_OK)
 async def upload_asset_image(
     asset_id: str, 
-    file: UploadFile = File(...), 
+    images: List[UploadFile] = File(...), # NOW ACCEPTS MULTIPLE
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    # 1. Validate the file is actually an image
-    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-        raise HTTPException(status_code=400, detail="Only image files are accepted")
-
-    # 2. Save it locally
-    file_location = f"{UPLOAD_DIR}/{asset_id}_img_{file.filename}"
-    with open(file_location, "wb+") as file_object:
-        shutil.copyfileobj(file.file, file_object)
-
-    # 3. Create the URL and save to MongoDB
-    image_url = f"/static/models/{asset_id}_img_{file.filename}"
+    saved_images = []
     
-    await db["fleet"].update_one(
-        {"_id": ObjectId(asset_id)},
-        {"$set": {"image_url": image_url}}
-    )
+    for file in images:
+        if file.filename:
+            if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                continue # Skip invalid files
+            
+            # Generate a unique name for each image
+            unique_filename = f"{asset_id}_img_{uuid.uuid4().hex[:8]}_{file.filename}"
+            file_location = f"{UPLOAD_DIR}/{unique_filename}"
+            
+            with open(file_location, "wb+") as file_object:
+                shutil.copyfileobj(file.file, file_object)
+                
+            saved_images.append(f"/static/models/{unique_filename}")
 
-    return {"message": "Image successfully linked", "image_url": image_url}
+    if saved_images:
+        await db["fleet"].update_one(
+            {"_id": ObjectId(asset_id)},
+            {"$set": {"images": saved_images, "image_url": saved_images[0]}} # Set array & fallback
+        )
+
+    return {"message": "Images successfully linked", "images": saved_images}
 
 
 @router.delete("/{asset_id}", status_code=status.HTTP_204_NO_CONTENT)

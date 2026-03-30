@@ -13,20 +13,20 @@ interface AccessoryModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    accessory: any | null; // If null, we are ADDING. If passed, we are EDITING.
+    accessory: any | null; 
 }
 
 export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: AccessoryModalProps) {
     const [isSaving, setIsSaving] = useState(false);
     
+    // 1. Updated state to hold an array of files
     const initialFormState = {
         name: "", brand: "", category: "Gripper", price: "", stock_quantity: "", compatible_with: "Universal",
-        imageFile: null as File | null
+        imageFiles: [] as File[] 
     };
     
     const [formData, setFormData] = useState(initialFormState);
 
-    // When the modal opens, check if we are editing. If yes, pre-fill. If no, clear it.
     useEffect(() => {
         if (isOpen) {
             if (accessory) {
@@ -37,7 +37,7 @@ export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: Access
                     price: accessory.price.toString(),
                     stock_quantity: accessory.stock_quantity.toString(),
                     compatible_with: accessory.compatible_with,
-                    imageFile: null // Keep null so we don't accidentally overwrite the existing image
+                    imageFiles: [] // Reset array when opening edit mode
                 });
             } else {
                 setFormData(initialFormState);
@@ -51,7 +51,6 @@ export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: Access
         try {
             const formDataToSend = new FormData();
             
-            // 1. Package the text data
             const payload = {
                 name: formData.name, 
                 brand: formData.brand, 
@@ -64,12 +63,13 @@ export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: Access
             
             formDataToSend.append("accessory_data", JSON.stringify(payload));
             
-            // 2. Append the new image file (if one was selected)
-            if (formData.imageFile) {
-                formDataToSend.append("image", formData.imageFile);
+            // 2. Loop through the array and append each image to the FormData under the key "images"
+            if (formData.imageFiles.length > 0) {
+                formData.imageFiles.forEach((file) => {
+                    formDataToSend.append("images", file); 
+                });
             }
 
-            // 3. Determine if we are POSTing (new) or PATCHing (edit)
             const method = accessory ? "PATCH" : "POST";
             const url = accessory 
                 ? `http://127.0.0.1:8000/api/admin/accessories/${accessory.id}`
@@ -77,12 +77,12 @@ export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: Access
 
             const response = await fetch(url, {
                 method: method,
-                body: formDataToSend, // Browser sets multipart/form-data automatically
+                body: formDataToSend, 
             });
 
             if (response.ok) {
                 onClose();
-                onSuccess(); // Triggers the page to re-fetch the data!
+                onSuccess(); 
             }
         } catch (error) {
             console.error("Error saving accessory:", error);
@@ -146,27 +146,45 @@ export function AccessoryModal({ isOpen, onClose, onSuccess, accessory }: Access
                     {/* IMAGE UPLOAD ZONE */}
                     <div className="pt-2 border-t border-zinc-800/60 mt-4">
                         <Label className="text-zinc-300 mb-2 block">
-                            {accessory ? "Replace Part Image (Optional)" : "Part Image"}
+                            {accessory ? "Replace Part Images (Optional)" : "Part Images"}
                         </Label>
                         <input 
-                            type="file" id="part-image-upload" accept="image/*" className="hidden" 
-                            onChange={(e) => { if (e.target.files && e.target.files[0]) setFormData({ ...formData, imageFile: e.target.files[0] }); }}
+                            type="file" 
+                            id="part-image-upload" 
+                            accept="image/*" 
+                            multiple // 3. Added multiple attribute!
+                            className="hidden" 
+                            onChange={(e) => { 
+                                if (e.target.files && e.target.files.length > 0) {
+                                    // Convert the FileList object to an actual Array
+                                    setFormData({ ...formData, imageFiles: Array.from(e.target.files) }); 
+                                } 
+                            }}
                         />
                         <Label 
                             htmlFor="part-image-upload" 
-                            className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${formData.imageFile ? "border-emerald-500/50 bg-emerald-500/5 hover:bg-emerald-500/10" : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50"}`}
+                            className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${formData.imageFiles.length > 0 ? "border-emerald-500/50 bg-emerald-500/5 hover:bg-emerald-500/10" : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50"}`}
                         >
-                            {formData.imageFile ? (
+                            {formData.imageFiles.length > 0 ? (
                                 <>
                                     <CheckCircle2 className="text-emerald-500 mb-2" size={24} />
-                                    <h3 className="text-zinc-100 font-medium text-sm">Image Ready</h3>
-                                    <p className="text-zinc-400 text-xs mt-1">{formData.imageFile.name}</p>
+                                    <h3 className="text-zinc-100 font-medium text-sm">Images Ready</h3>
+                                    <p className="text-zinc-400 text-xs mt-1">{formData.imageFiles.length} files selected</p>
+                                    
+                                    {/* Display pills for each selected file name */}
+                                    <div className="flex flex-wrap justify-center gap-1 mt-3 max-w-full">
+                                        {formData.imageFiles.map((file, idx) => (
+                                            <span key={idx} className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-1 rounded truncate max-w-[120px]">
+                                                {file.name}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </>
                             ) : (
                                 <>
                                     <ImagePlus className="text-blue-500 mb-2" size={24} />
-                                    <h3 className="text-zinc-100 font-medium text-sm">Upload Photo</h3>
-                                    <p className="text-zinc-500 text-xs mt-1 mb-3">.JPG, .PNG, or .WEBP</p>
+                                    <h3 className="text-zinc-100 font-medium text-sm">Upload Photos</h3>
+                                    <p className="text-zinc-500 text-xs mt-1 mb-3">Select multiple .JPG or .PNG files</p>
                                     <div className="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-700">Browse Files</div>
                                 </>
                             )}

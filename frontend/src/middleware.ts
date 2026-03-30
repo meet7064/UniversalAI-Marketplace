@@ -1,17 +1,30 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// 1. The function MUST be exported with the exact name "middleware"
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect the admin routes
+  // 1. Define customer routes that require authentication
+  const protectedCustomerRoutes = ['/dashboard', '/cart', '/trade-in'];
+  const isCustomerRoute = protectedCustomerRoutes.some(route => pathname.startsWith(route));
+
+  // 2. Protect Admin Routes
   if (pathname.startsWith('/admin')) {
-    const token = request.cookies.get('admin_session')?.value;
+    // Check for either the old admin session or the new unified vshop token
+    const token = request.cookies.get('admin_session')?.value || request.cookies.get('universalAI_marketplace_token')?.value;
 
     if (!token) {
-      // If no token exists, redirect them to the storefront login
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/auth', request.url));
+    }
+  }
+
+  // 3. Protect Customer Routes
+  if (isCustomerRoute) {
+    // Looks for the unified token cookie
+    const token = request.cookies.get('universalAI_marketplace')?.value;
+
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth', request.url));
     }
   }
 
@@ -19,12 +32,12 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// 2. The config object MUST be exported to tell Next.js which routes to intercept
+// Tell Next.js which routes to intercept
 export const config = {
   matcher: [
-    /*
-     * Match all request paths that start with /admin
-     */
     '/admin/:path*',
+    '/dashboard/:path*',
+    '/cart/:path*',
+    '/trade-in/:path*',
   ],
 };

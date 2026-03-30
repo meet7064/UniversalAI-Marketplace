@@ -42,6 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Service Ops", href: "/admin/commerce/service", icon: Wrench },
     { name: "Analytics", href: "/admin/analytics", icon: Activity },
     { name: "Appraisal", href: "/admin/appraisal", icon: Calculator },
+    { name: "User Activity", href: "/admin/activity", icon: Calculator },
     { name: "System Settings", href: "/admin/settings", icon: Settings },
   ];
 

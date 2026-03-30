@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
     Search, Filter, MoreHorizontal, Edit, Trash2, 
-    ShieldCheck, Ban, Box, Bot, Activity, Loader2,UploadCloud,ImagePlus
+    ShieldCheck, Ban, Box, Bot, Activity, Loader2, UploadCloud, ImagePlus, Plus, X
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ function RobotModel({ url }: { url: string }) {
     return <primitive object={scene} />;
 }
 
-// 3D Digital Twin Viewer
 function DigitalTwinViewer({ robotName, modelUrl }: { robotName: string, modelUrl: string }) {
     return (
         <Dialog>
@@ -39,8 +38,7 @@ function DigitalTwinViewer({ robotName, modelUrl }: { robotName: string, modelUr
             <DialogContent className="sm:max-w-[800px] bg-zinc-950 border-zinc-800 text-zinc-100 p-0 overflow-hidden">
                 <DialogHeader className="p-6 pb-0 absolute top-0 left-0 z-10 pointer-events-none">
                     <DialogTitle className="flex items-center gap-2 text-xl drop-shadow-md">
-                        <Box className="text-blue-500" />
-                        Digital Twin: {robotName}
+                        <Box className="text-blue-500" /> Digital Twin: {robotName}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -68,13 +66,13 @@ export default function FleetCommandPage() {
     const [fleet, setFleet] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Edit Modal State
     const [editingRobot, setEditingRobot] = useState<any | null>(null);
     const [isEditSaving, setIsEditSaving] = useState(false);
     const [editForm, setEditForm] = useState({
         name: "", brand: "", category: "Buy", condition: "New", price: "",
         payload: "", reach: "", controller: "", hours: "",
-        imageFile: null as File | null,
+        key_features: [] as { value: string, label: string }[], 
+        imageFiles: [] as File[], // NOW AN ARRAY
         modelFile: null as File | null  
     });
 
@@ -82,96 +80,76 @@ export default function FleetCommandPage() {
         setIsLoading(true);
         try {
             const response = await fetch("http://127.0.0.1:8000/api/admin/fleet");
-            if (response.ok) {
-                const data = await response.json();
-                setFleet(data);
-            }
-        } catch (error) {
-            console.error("Failed to load fleet data:", error);
-        } finally {
-            setIsLoading(false);
-        }
+            if (response.ok) setFleet(await response.json());
+        } catch (error) { console.error(error); } finally { setIsLoading(false); }
     };
 
     useEffect(() => { fetchFleet(); }, []);
 
-    // 1. Universal Update function (Used for Quick Status changes)
     const updateStatus = async (id: string, newStatus: string) => {
         try {
             const response = await fetch(`http://127.0.0.1:8000/api/admin/fleet/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus }),
+                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: newStatus }),
             });
             if (response.ok) fetchFleet();
-        } catch (error) { console.error("Error updating status:", error); }
+        } catch (error) { console.error(error); }
     };
 
-    // 2. Delete Asset Function
     const deleteAsset = async (id: string) => {
         if (!window.confirm("WARNING: Are you sure you want to permanently delete this asset? This cannot be undone.")) return;
         try {
             const response = await fetch(`http://127.0.0.1:8000/api/admin/fleet/${id}`, { method: "DELETE" });
             if (response.ok) fetchFleet();
-        } catch (error) { console.error("Error deleting asset:", error); }
+        } catch (error) { console.error(error); }
     };
 
-    // 3. Open Edit Modal and pre-fill data
     const openEditModal = (robot: any) => {
         setEditingRobot(robot);
         setEditForm({
             name: robot.name, brand: robot.brand, category: robot.category, condition: robot.condition,
             price: robot.price.toString(), payload: robot.payload.toString(), reach: robot.reach.toString(),
             controller: robot.controller, hours: robot.hours.toString(),
-            imageFile: null, // Reset on open
-            modelFile: null  // Reset on open
+            key_features: robot.key_features || [], 
+            imageFiles: [], 
+            modelFile: null  
         });
     };
 
-    // 4. Submit Edit Form
     const handleEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingRobot) return;
         setIsEditSaving(true);
         
         try {
-            // 1. Update text/number data
             const payload = {
                 name: editForm.name, brand: editForm.brand, category: editForm.category, condition: editForm.condition,
                 price: parseFloat(editForm.price), payload: parseFloat(editForm.payload), reach: parseFloat(editForm.reach),
                 controller: editForm.controller, hours: parseInt(editForm.hours) || 0,
+                key_features: editForm.key_features.filter((f) => f.value && f.label)
             };
 
             const response = await fetch(`http://127.0.0.1:8000/api/admin/fleet/${editingRobot.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
             });
 
             if (response.ok) {
-                // 2. If a NEW image was selected, upload it to overwrite the old one
-                if (editForm.imageFile) {
+                if (editForm.imageFiles.length > 0) {
                     const imgData = new FormData();
-                    imgData.append("file", editForm.imageFile);
-                    await fetch(`http://127.0.0.1:8000/api/admin/fleet/${editingRobot.id}/image`, {
-                        method: "POST", body: imgData,
-                    });
+                    editForm.imageFiles.forEach(file => imgData.append("images", file));
+                    await fetch(`http://127.0.0.1:8000/api/admin/fleet/${editingRobot.id}/image`, { method: "POST", body: imgData });
                 }
 
-                // 3. If a NEW 3D twin was selected, upload it to overwrite the old one
                 if (editForm.modelFile) {
                     const twinData = new FormData();
                     twinData.append("file", editForm.modelFile);
-                    await fetch(`http://127.0.0.1:8000/api/admin/fleet/${editingRobot.id}/twin`, {
-                        method: "POST", body: twinData,
-                    });
+                    await fetch(`http://127.0.0.1:8000/api/admin/fleet/${editingRobot.id}/twin`, { method: "POST", body: twinData });
                 }
 
                 setEditingRobot(null);
-                fetchFleet(); // Refresh UI to show new images!
+                fetchFleet(); 
             }
         } catch (error) {
-            console.error("Failed to update asset:", error);
+            console.error(error);
         } finally {
             setIsEditSaving(false);
         }
@@ -179,7 +157,6 @@ export default function FleetCommandPage() {
 
     return (
         <div className="space-y-6 pb-12">
-            {/* Page Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-semibold tracking-tight text-zinc-100">Fleet Command</h2>
@@ -188,7 +165,6 @@ export default function FleetCommandPage() {
                 <UniversalIntakeModal onSuccess={fetchFleet} />
             </div>
 
-            {/* Toolbar */}
             <div className="flex items-center justify-between gap-4 bg-zinc-950 p-4 rounded-xl border border-zinc-800/60 shadow-sm">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
@@ -199,7 +175,6 @@ export default function FleetCommandPage() {
                 </Button>
             </div>
 
-            {/* Loading & Empty States */}
             {isLoading && (
                 <div className="h-64 flex flex-col items-center justify-center gap-3 border border-zinc-800/60 rounded-xl bg-zinc-950">
                     <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -214,22 +189,46 @@ export default function FleetCommandPage() {
                 </div>
             )}
 
-            {/* Card Grid */}
             {!isLoading && fleet.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                    {fleet.map((robot) => (
+                    {fleet.map((robot) => {
+                        const imageArray = robot.images && robot.images.length > 0 
+                            ? robot.images 
+                            : robot.image_url ? [robot.image_url] : [];
+
+                        return (
                         <div key={robot.id} className="bg-zinc-950 border border-zinc-800/60 rounded-xl flex flex-col overflow-hidden hover:border-zinc-700 transition-colors shadow-sm group">
                             
+                            {/* DYNAMIC MULTI-IMAGE SCROLL AREA */}
                             <div className="relative h-56 bg-zinc-900 flex items-center justify-center border-b border-zinc-800/60 overflow-hidden">
-                                {robot.image_url ? (
-                                    <img src={`http://127.0.0.1:8000${robot.image_url}`} alt={robot.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                ) : (
+                                {imageArray.length === 0 ? (
                                     <Bot className="h-16 w-16 text-zinc-800" />
+                                ) : (
+                                    <div className="flex h-full w-full overflow-x-auto snap-x snap-mandatory touch-pan-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                        {imageArray.map((img: string, idx: number) => (
+                                            <img 
+                                                key={idx}
+                                                src={`http://127.0.0.1:8000${img}`} 
+                                                alt={`${robot.name} - ${idx + 1}`} 
+                                                className="w-full h-full shrink-0 snap-center object-cover" 
+                                            />
+                                        ))}
+                                    </div>
                                 )}
-                                <div className="absolute top-3 left-3 flex flex-col gap-2">
+
+                                {/* Indicator Dots */}
+                                {imageArray.length > 1 && (
+                                    <div className="absolute bottom-3 w-full flex justify-center gap-1.5 pointer-events-none z-10">
+                                        {imageArray.map((_: string, i: number) => (
+                                            <div key={i} className="h-1.5 w-1.5 rounded-full bg-white/70 shadow-[0_0_2px_rgba(0,0,0,0.5)]" />
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="absolute top-3 left-3 pointer-events-none">
                                     <Badge variant="outline" className="bg-zinc-950/80 backdrop-blur-md border-zinc-700/80 text-zinc-200">{robot.category}</Badge>
                                 </div>
-                                <div className="absolute top-3 right-3 flex flex-col gap-2">
+                                <div className="absolute top-3 right-3 flex flex-col gap-2 pointer-events-none">
                                     {robot.certified && <div className="bg-blue-500/10 text-blue-500 p-1.5 rounded-full backdrop-blur-md border border-blue-500/20 shadow-lg"><ShieldCheck size={16} /></div>}
                                     {robot.model_url && <div className="bg-purple-500/10 text-purple-400 p-1.5 rounded-full backdrop-blur-md border border-purple-500/20 shadow-lg"><Box size={16} /></div>}
                                 </div>
@@ -242,7 +241,6 @@ export default function FleetCommandPage() {
                                         <p className="text-zinc-400 text-sm mt-0.5 truncate">{robot.brand}</p>
                                     </div>
 
-                                    {/* Action Menu */}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" className="h-8 w-8 p-0 shrink-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
@@ -250,24 +248,16 @@ export default function FleetCommandPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" className="bg-zinc-950 border-zinc-800 text-zinc-300">
-                                            <DropdownMenuLabel className="text-zinc-500 text-xs uppercase tracking-wider">Actions</DropdownMenuLabel>
-                                            <DropdownMenuSeparator className="bg-zinc-800" />
-                                            
-                                            {/* WIRED UP: Edit Details */}
                                             <DropdownMenuItem onClick={() => openEditModal(robot)} className="focus:bg-zinc-900 focus:text-zinc-100 cursor-pointer">
                                                 <Edit className="mr-2 h-4 w-4" /> Edit Details
                                             </DropdownMenuItem>
-                                            
                                             <DropdownMenuItem onClick={() => updateStatus(robot.id, "Available")} className="focus:bg-zinc-900 focus:text-emerald-400 cursor-pointer">
                                                 <ShieldCheck className="mr-2 h-4 w-4" /> Mark Available
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => updateStatus(robot.id, "Out of Stock")} className="focus:bg-zinc-900 focus:text-red-400 cursor-pointer">
                                                 <Ban className="mr-2 h-4 w-4" /> Mark Out of Stock
                                             </DropdownMenuItem>
-                                            
                                             <DropdownMenuSeparator className="bg-zinc-800" />
-                                            
-                                            {/* WIRED UP: Delete Asset */}
                                             <DropdownMenuItem onClick={() => deleteAsset(robot.id)} className="focus:bg-red-500/10 focus:text-red-500 text-red-500 cursor-pointer">
                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete Asset
                                             </DropdownMenuItem>
@@ -297,6 +287,24 @@ export default function FleetCommandPage() {
                                     </div>
                                 </div>
 
+                                {robot.key_features && robot.key_features.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2 mb-6 mt-1">
+                                        {robot.key_features.slice(0, 3).map((feature: any, idx: number) => (
+                                            <div key={idx} className="bg-zinc-900 border border-zinc-800/60 rounded flex items-center gap-1.5 px-2 py-1 max-w-full">
+                                                <span className="text-zinc-100 text-xs font-bold truncate">{feature.value}</span>
+                                                <span className="text-zinc-500 text-[10px] uppercase tracking-wider truncate">{feature.label}</span>
+                                            </div>
+                                        ))}
+                                        {robot.key_features.length > 3 && (
+                                            <div className="flex items-center text-zinc-500 text-xs font-bold px-1">
+                                                +{robot.key_features.length - 3}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mb-6"></div> 
+                                )}
+
                                 <div className="pt-4 border-t border-zinc-800/60 flex justify-between items-center mt-auto">
                                     <span className="text-zinc-600 text-xs font-mono tracking-wider">ID: {robot.id.length > 10 ? robot.id.slice(-6).toUpperCase() : robot.id}</span>
                                     <div className="text-lg font-bold text-zinc-100">
@@ -306,22 +314,17 @@ export default function FleetCommandPage() {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
             )}
 
-            
-            {/* THE EDIT MODAL */}
             <Dialog open={!!editingRobot} onOpenChange={(open) => !open && setEditingRobot(null)}>
                 <DialogContent className="sm:max-w-[600px] bg-zinc-950 border-zinc-800 text-zinc-100">
                     <DialogHeader>
                         <DialogTitle>Edit Asset Details</DialogTitle>
                     </DialogHeader>
                     
-                    {/* Added max height and overflow so it scrolls nicely on small laptops */}
-                    <form onSubmit={handleEditSubmit} className="space-y-6 py-4 max-h-[75vh] overflow-y-auto pr-2">
-                        
-                        {/* Basic Info Section */}
+                    <form onSubmit={handleEditSubmit} className="space-y-6 py-4 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
                         <div className="space-y-4">
                             <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Basic Information</h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -361,7 +364,6 @@ export default function FleetCommandPage() {
                             </div>
                         </div>
 
-                        {/* Technical Specs Section */}
                         <div className="space-y-4 pt-4 border-t border-zinc-800/60">
                             <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Technical Specifications</h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -383,36 +385,99 @@ export default function FleetCommandPage() {
                                 </div>
                             </div>
                         </div>
+                                
+                        <div className="space-y-4 pt-4 border-t border-zinc-800/60">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Custom Key Features</h3>
+                                <Button 
+                                    type="button" variant="outline" size="sm" 
+                                    className="bg-zinc-900 border-zinc-800 hover:bg-zinc-800 h-8 text-zinc-300"
+                                    onClick={() => setEditForm({...editForm, key_features: [...editForm.key_features, { value: "", label: "" }]})}
+                                >
+                                    <Plus className="h-3 w-3 mr-1"/> Add
+                                </Button>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                {editForm.key_features.map((feature, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <Input 
+                                            placeholder="Value (e.g. 23)" value={feature.value} 
+                                            onChange={(e) => {
+                                                const newFeatures = [...editForm.key_features];
+                                                newFeatures[idx].value = e.target.value;
+                                                setEditForm({...editForm, key_features: newFeatures});
+                                            }} 
+                                            className="bg-zinc-950 border-zinc-800" 
+                                        />
+                                        <Input 
+                                            placeholder="Label (e.g. DOF)" value={feature.label} 
+                                            onChange={(e) => {
+                                                const newFeatures = [...editForm.key_features];
+                                                newFeatures[idx].label = e.target.value;
+                                                setEditForm({...editForm, key_features: newFeatures});
+                                            }} 
+                                            className="bg-zinc-950 border-zinc-800" 
+                                        />
+                                        <Button 
+                                            type="button" variant="ghost" size="icon" 
+                                            onClick={() => {
+                                                const newFeatures = editForm.key_features.filter((_, i) => i !== idx);
+                                                setEditForm({...editForm, key_features: newFeatures});
+                                            }} 
+                                            className="text-zinc-500 hover:text-red-400 hover:bg-red-400/10 shrink-0"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                        {/* NEW: Media Assets Replacement Section */}
                         <div className="space-y-4 pt-4 border-t border-zinc-800/60">
                             <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Update Media Assets</h3>
-                            <p className="text-xs text-zinc-500 mb-2">Leave blank to keep current files. Uploading new files will overwrite the existing ones.</p>
-                            
                             <div className="grid grid-cols-2 gap-4">
-                                {/* 2D Image Upload */}
                                 <div>
                                     <input 
-                                        type="file" id="edit-image-upload" accept="image/*" className="hidden" 
-                                        onChange={(e) => { if (e.target.files && e.target.files[0]) setEditForm({ ...editForm, imageFile: e.target.files[0] }); }}
+                                        type="file" id="edit-image-upload" accept="image/*" multiple className="hidden" 
+                                        onChange={(e) => { 
+                                            if (e.target.files && e.target.files.length > 0) {
+                                                const newFiles = Array.from(e.target.files);
+                                                setEditForm(prev => ({ ...prev, imageFiles: [...prev.imageFiles, ...newFiles] })); 
+                                                e.target.value = '';
+                                            } 
+                                        }}
                                     />
                                     <Label 
                                         htmlFor="edit-image-upload" 
-                                        className={`h-32 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${editForm.imageFile ? "border-emerald-500/50 bg-emerald-500/5" : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50"}`}
+                                        className={`h-32 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${editForm.imageFiles.length > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50"}`}
                                     >
-                                        {editForm.imageFile ? (
-                                            <div className="text-emerald-500 font-medium break-all text-xs">{editForm.imageFile.name}</div>
+                                        {editForm.imageFiles.length > 0 ? (
+                                            <>
+                                                <ImagePlus className="text-emerald-500 mb-2" size={20} />
+                                                <div className="text-emerald-500 font-medium break-all text-xs">{editForm.imageFiles.length} files selected</div>
+                                            </>
                                         ) : (
                                             <>
                                                 <ImagePlus className="text-blue-500 mb-2" size={20} />
-                                                <h3 className="text-zinc-100 font-medium text-xs">Replace Photo</h3>
-                                                <p className="text-zinc-500 text-[10px] mt-1">.JPG or .PNG</p>
+                                                <h3 className="text-zinc-100 font-medium text-xs">Replace Photos</h3>
+                                                <p className="text-zinc-500 text-[10px] mt-1">Select multiple</p>
                                             </>
                                         )}
                                     </Label>
+                                    
+                                    {editForm.imageFiles.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-2 max-w-full">
+                                            {editForm.imageFiles.map((file, idx) => (
+                                                <div key={idx} className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 text-[10px] pl-1.5 pr-0.5 py-0.5 rounded shadow-sm">
+                                                    <span className="truncate max-w-[80px]">{file.name}</span>
+                                                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditForm(prev => ({ ...prev, imageFiles: prev.imageFiles.filter((_, i) => i !== idx) })); }} className="hover:text-red-400 text-zinc-500 rounded p-0.5"><X size={10} /></button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* 3D Twin Upload */}
                                 <div>
                                     <input 
                                         type="file" id="edit-3d-upload" accept=".glb,.gltf" className="hidden" 

@@ -35,7 +35,7 @@ export default function FleetOverviewPage() {
                 const [fleetRes, ticketsRes, pulseRes] = await Promise.all([
                     fetch("http://127.0.0.1:8000/api/admin/fleet"),
                     fetch("http://127.0.0.1:8000/api/service/tickets/"),
-                    fetch("http://127.0.0.1:8000/api/activity/pulse").catch(() => null) // Catch in case endpoint isn't up yet
+                    fetch("http://127.0.0.1:8000/api/admin/activity").catch(() => null) // Catch in case endpoint isn't up yet
                 ]);
 
                 if (fleetRes.ok && ticketsRes.ok) {

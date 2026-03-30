@@ -3,6 +3,8 @@ from jose import jwt
 import bcrypt
 from app.core.config import settings
 
+SECRET_KEY = "super_secret_robotics_key_change_me_later"
+ALGORITHM = "HS256"
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     # Bcrypt requires bytes, so we encode the strings to utf-8
     return bcrypt.checkpw(

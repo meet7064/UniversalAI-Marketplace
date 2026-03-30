@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class AccessoryCreate(BaseModel):
@@ -10,6 +10,7 @@ class AccessoryCreate(BaseModel):
     stock_quantity: int = Field(default=0)
     compatible_with: str = Field(default="Universal", description="Robot model compatibility")
     status: str = Field(default="In Stock")
+    images: Optional[List[str]] = [] # NEW: Array of images
 
 class AccessoryUpdate(BaseModel):
     name: Optional[str] = None
@@ -20,8 +21,10 @@ class AccessoryUpdate(BaseModel):
     compatible_with: Optional[str] = None
     status: Optional[str] = None
     image_url: Optional[str] = None
+    images: Optional[List[str]] = None # NEW
 
 class AccessoryResponse(AccessoryCreate):
     id: str
     created_at: datetime
     image_url: Optional[str] = None
+    images: Optional[List[str]] = [] # NEW

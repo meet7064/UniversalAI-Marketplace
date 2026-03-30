@@ -8,8 +8,8 @@ from app.db.mongodb import get_database
 
 router = APIRouter()
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register_user(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
+@router.post("/register_admin", status_code=status.HTTP_201_CREATED)
+async def register_admin(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
     # 1. Check if user already exists
     existing_user = await db["users"].find_one({"email": user.email})
     if existing_user:
@@ -26,8 +26,8 @@ async def register_user(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_
     await db["users"].insert_one(new_user)
     return {"message": "Admin user created successfully"}
 
-@router.post("/login", response_model=TokenResponse)
-async def login(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
+@router.post("/login_admin", response_model=TokenResponse)
+async def admin_login(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
     # 1. Find user in database
     db_user = await db["users"].find_one({"email": user.email})
     
