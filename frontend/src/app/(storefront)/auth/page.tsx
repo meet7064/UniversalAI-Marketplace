@@ -64,7 +64,7 @@ export default function AuthPage() {
                 alert("Account created! Please sign in.");
             }
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message); 
         } finally {
             setIsLoading(false);
         }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Cpu, ShoppingCart, Zap, Tag, ShieldCheck } from "lucide-react";
+import { ArrowRight, Cpu, ShoppingCart, ShieldCheck, PlayCircle, Layers, Zap, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/store/useStore";
@@ -12,11 +12,9 @@ export default function DirectStorefrontPage() {
     const [featuredFleet, setFeaturedFleet] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
-    // Pull the addToCart function from Zustand so they can buy directly from the homepage!
     const addToCart = useStore((state) => state.addToCart);
     const isAuthenticated = useStore((state) => state.isAuthenticated);
 
-    // Fetch the top 6 live robots
     useEffect(() => {
         const fetchFeatured = async () => {
             try {
@@ -35,11 +33,10 @@ export default function DirectStorefrontPage() {
     }, []);
 
     const handleAddToCart = (robot: any) => {
-
         if (!isAuthenticated) {
             alert("Please log in or create an account to purchase hardware.");
             router.push("/auth");
-            return; // Stop the function here
+            return;
         }
         addToCart({
             id: robot.id,
@@ -51,149 +48,176 @@ export default function DirectStorefrontPage() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#09090b] text-zinc-100">
+        <div className="flex flex-col min-h-screen bg-[#050505] text-zinc-100 selection:bg-yellow-500/30">
             
-            {/* --- TOP ADVERTISEMENT BANNER --- */}
-            <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700/50">
-                <div className="max-w-7xl mx-auto px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                            <Tag size={16} className="text-white" />
-                        </div>
-                        <div>
-                            <p className="font-bold text-white text-sm sm:text-base">Q1 Automation Drive Special</p>
-                            <p className="text-blue-200 text-xs sm:text-sm">0% APR on all 6-Axis Collaborative Leases this month.</p>
-                        </div>
-                    </div>
-                    <Link href="/shop">
-                        <Button size="sm" className="bg-white text-blue-900 hover:bg-zinc-200 font-bold whitespace-nowrap">
-                            Claim Offer <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-
-            {/* --- MAIN CONTENT AREA --- */}
-            <main className="max-w-7xl mx-auto px-6 py-8 w-full">
+            {/* --- HERO SECTION --- */}
+            {/* Changed from h-[90vh] to min-h-screen to ensure content fits on mobile */}
+            <header className="relative w-full min-h-screen flex flex-col items-center overflow-hidden border-b border-zinc-900">
                 
-                {/* HEADER ROW */}
-                <div className="flex items-end justify-between mb-8 pb-4 border-b border-zinc-800/60">
-                    <div>
-                        <h2 className="text-2xl font-black text-white tracking-tight mb-1">Featured Hardware</h2>
-                        <p className="text-sm text-zinc-500">Live inventory from our global fulfillment centers.</p>
-                    </div>
-                    <Link href="/shop" className="hidden sm:flex items-center text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors">
-                        View Full Catalog <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
+                {/* Background Layer */}
+                <div className="absolute inset-0 z-0">
+                    <img 
+                        src="https://images.unsplash.com/photo-1546776310-eef45dd6d63c?auto=format&fit=crop&q=80&w=2000" 
+                        className="w-full h-full object-cover opacity-20 grayscale brightness-50"
+                        alt="Hero background"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-black/60" />
                 </div>
 
-                {/* LOADING STATE */}
-                {isLoading && (
-                    <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
-                        <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="font-medium">Loading live inventory...</p>
+                {/* Hero Text Content */}
+                <div className="relative z-10 max-w-5xl px-6 text-center pt-32 pb-20">
+                    <Badge variant="outline" className="mb-8 border-yellow-500/50 text-yellow-500 rounded-full px-4 py-1.5 bg-yellow-500/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700">
+                        Official North American Unitree Partner
+                    </Badge>
+                    <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                        Delivering Humanoids & <br/>
+                        <span className="text-zinc-500">Quadrupeds for Industry</span>
+                    </h1>
+                    <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-light animate-in fade-in duration-1000 delay-300">
+                        Unitree humanoid and quadruped robots for education, research, and industry. 
+                        Official U.S. distribution with domestic technical support.
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-24">
+                        <Button className="rounded-full bg-zinc-100 text-black hover:bg-white px-10 h-14 font-bold text-lg transition-transform hover:scale-105 active:scale-95">
+                            Discover the Lineup
+                        </Button>
+                        <Button variant="outline" className="rounded-full border-zinc-700 hover:bg-zinc-800/50 px-10 h-14 font-bold text-lg backdrop-blur-sm">
+                            Speak to an expert <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
                     </div>
-                )}
 
-                {/* PRODUCT GRID (Reused from Shop for consistency) */}
-                {!isLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                        {featuredFleet.map((robot) => (
-                            <div key={robot.id} className="bg-zinc-950 border border-zinc-800/60 rounded-xl overflow-hidden hover:border-zinc-700 transition-all group flex flex-col">
-                                
-                                {/* Image Area */}
-                                <div className="relative h-56 bg-zinc-900 flex items-center justify-center border-b border-zinc-800/60 overflow-hidden">
-                                    {robot.image_url ? (
-                                        <img src={`http://127.0.0.1:8000${robot.image_url}`} alt={robot.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                    ) : (
-                                        <Cpu size={48} className="text-zinc-800" />
-                                    )}
-                                    <div className="absolute top-3 left-3 flex flex-col gap-2">
-                                        <Badge variant="secondary" className="bg-zinc-950/80 text-zinc-100 backdrop-blur-md border-zinc-700/80 font-semibold shadow-sm">
-                                            {robot.brand || "Brand"}
-                                        </Badge>
-                                    </div>
-                                    <div className="absolute top-3 right-3">
-                                        <Badge className="bg-white text-black font-bold shadow-md">
-                                            {robot.category === "Rent" ? "For Rent" : "For Sale"}
-                                        </Badge>
+                    {/* --- CATEGORY CARDS (Now part of normal flow to prevent overlap) --- */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-6xl mx-auto w-full px-2">
+                        {[
+                            { name: "Humanoids", icon: <Layers size={16}/> },
+                            { name: "Quadrupeds", icon: <Zap size={16}/> },
+                            { name: "Arms & Manipulators", icon: <Cpu size={16}/> },
+                            { name: "Accessories", icon: <Shield size={16}/> }
+                        ].map((cat, i) => (
+                            <div key={i} className="group relative aspect-[3/4] bg-zinc-900/40 backdrop-blur-xl border border-zinc-800 rounded-2xl p-1 transition-all hover:border-yellow-500/60 overflow-hidden">
+                                <div className="w-full h-full rounded-xl overflow-hidden relative">
+                                    <img src={`https://images.unsplash.com/photo-1531746790731-6c087fecd05a?w=400&sig=${i}`} className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700" alt={cat.name} />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+                                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                                        <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-300">{cat.name}</span>
+                                        <ArrowRight size={14} className="text-zinc-600 group-hover:text-yellow-500 transition-colors" />
                                     </div>
                                 </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </header>
 
-                                {/* Content Area */}
-                                <div className="p-5 flex-1 flex flex-col">
-                                    <h3 className="text-xl font-bold text-zinc-100 mb-1 truncate">{robot.name || "Unknown Model"}</h3>
-                                    
-                                    <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
-                                        <span className="flex items-center gap-1"><ShieldCheck size={14} className="text-emerald-500" /> Certified</span>
-                                        <span>•</span>
-                                        <span>Payload: {robot.payload || 0}kg</span>
-                                    </div>
-                                    {/* NEW: Dynamic Key Features Preview */}
-                                    {robot.key_features && robot.key_features.length > 0 ? (
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {robot.key_features.slice(0, 2).map((feature: any, idx: number) => (
-                                                <div key={idx} className="bg-zinc-900 border border-zinc-800/60 rounded flex items-center gap-1 px-1.5 py-0.5 max-w-full">
-                                                    <span className="text-zinc-200 text-[11px] font-bold truncate">{feature.value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+            {/* --- PRODUCT GRID SECTION --- */}
+            <main className="max-w-7xl mx-auto px-6 py-24 w-full">
+                
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6 border-b border-zinc-900 pb-8">
+                    <div>
+                        <div className="h-1 w-12 bg-yellow-500 mb-4" />
+                        <h2 className="text-4xl font-black text-white tracking-tighter">Live Inventory</h2>
+                        <p className="text-zinc-500 mt-2">Systems ready for immediate North American dispatch.</p>
+                    </div>
+                    <Link href="/shop" className="group flex items-center text-sm font-bold text-yellow-500">
+                        Explore Full Catalog <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-2 transition-transform" />
+                    </Link>
+                </div>
+
+                {isLoading ? (
+                    <div className="flex flex-col items-center py-32">
+                        <div className="h-12 w-12 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4" />
+                        <p className="text-zinc-600 font-mono text-xs tracking-widest">SYNCING DATABASE...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {featuredFleet.map((robot) => (
+                            <div key={robot.id} className="flex flex-col bg-[#0c0c0c] border border-zinc-900 rounded-[2rem] overflow-hidden hover:border-zinc-700 transition-all group">
+                                {/* Image Box */}
+                                <div className="relative h-64 bg-zinc-950 flex items-center justify-center overflow-hidden">
+                                    {robot.image_url ? (
+                                        <img 
+                                            src={`http://127.0.0.1:8000${robot.image_url}`} 
+                                            alt={robot.name} 
+                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100" 
+                                        />
                                     ) : (
-                                        <div className="mb-4"></div> /* Spacer */
+                                        <Cpu size={60} className="text-zinc-800" />
                                     )}
+                                    <Badge className="absolute top-6 right-6 bg-white text-black font-black text-[10px] px-3 py-1">
+                                        {robot.category === "Rent" ? "RENTAL" : "UNIT AVAILABLE"}
+                                    </Badge>
+                                </div>
 
-                                    {/* Price & Actions */}
-                                    <div className="mt-auto flex items-end justify-between mb-4">
-                                        <div>
-                                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mb-0.5">
-                                                {robot.category === "Rent" ? "Monthly" : "Price"}
-                                            </p>
-                                            <p className="text-2xl font-black text-white tracking-tight">
-                                                ${Number(robot.price).toLocaleString()}
-                                            </p>
-                                        </div>
+                                {/* Content Box */}
+                                <div className="p-8 flex-1 flex flex-col">
+                                    <h3 className="text-2xl font-bold text-white mb-2 leading-tight">{robot.name || "Enterprise System"}</h3>
+                                    <div className="flex items-center gap-4 text-[11px] font-bold text-zinc-500 mb-8 uppercase tracking-wider">
+                                        <span className="flex items-center gap-1.5 text-emerald-500">
+                                            <ShieldCheck size={14} /> Certified
+                                        </span>
+                                        <span>•</span>
+                                        <span>Payload {robot.payload || 0}kg</span>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Button variant="outline" className="w-full bg-zinc-900 border-zinc-700 hover:bg-zinc-800 text-xs h-9" onClick={() => handleAddToCart(robot)}>
-                                            <ShoppingCart className="mr-2 h-3 w-3" /> Add to Cart
-                                        </Button>
-                                        <Link href={`/asset/${robot.id}`}>
-                                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9">
-                                                Details
+                                    <div className="mt-auto pt-6 border-t border-zinc-900 flex items-center justify-between">
+                                        <div>
+                                            <span className="text-[10px] text-zinc-600 uppercase font-black block mb-1">MSRP Starting at</span>
+                                            <span className="text-3xl font-black text-white tracking-tighter">${Number(robot.price).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                className="w-12 h-12 rounded-full border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 p-0" 
+                                                onClick={() => handleAddToCart(robot)}
+                                            >
+                                                <ShoppingCart size={18} />
                                             </Button>
-                                        </Link>
+                                            <Link href={`/asset/${robot.id}`}>
+                                                <Button className="h-12 rounded-full bg-zinc-100 text-black hover:bg-white px-6 font-bold text-sm">
+                                                    Specs
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
+            </main>
 
-                {/* --- MID-PAGE ADVERTISEMENT (Trade-In) --- */}
-                <div className="relative rounded-2xl overflow-hidden border border-zinc-800/60 bg-zinc-950 mt-4 mb-12">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900/40 to-blue-900/20 z-0"></div>
-                    <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="max-w-xl text-center md:text-left">
-                            <Badge className="bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 mb-4 border border-purple-500/30">
-                                <Zap size={14} className="mr-1.5 inline" /> AI Diagnostic Tool
-                            </Badge>
-                            <h3 className="text-3xl font-black text-white mb-3 tracking-tight">Got old hardware gathering dust?</h3>
-                            <p className="text-zinc-400 text-lg">
-                                Upload your robot's controller log files. Our AI will appraise its health and generate an instant, guaranteed cash or trade-in offer within seconds.
-                            </p>
-                        </div>
-                        <div className="shrink-0 w-full md:w-auto">
-                            <Link href="/trade-in">
-                                <Button className="w-full md:w-auto h-14 px-8 bg-white text-black hover:bg-zinc-200 font-bold text-lg rounded-xl shadow-xl shadow-purple-900/20">
-                                    Appraise My Robot Now
-                                </Button>
-                            </Link>
-                        </div>
+            {/* --- WHY ROBOSTORE (No-Overlap Design) --- */}
+            <section className="max-w-7xl mx-auto px-6 mb-32">
+                <div className="relative rounded-[3rem] bg-gradient-to-br from-[#0c0c0c] to-[#050505] border border-zinc-900 p-10 md:p-20 overflow-hidden flex flex-col md:flex-row items-center gap-12">
+                    <div className="relative z-10 flex-1">
+                        <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight">
+                            Why Robostore?
+                        </h2>
+                        <p className="text-zinc-400 text-lg leading-relaxed mb-10 max-w-xl">
+                            We are the official North American partner of Unitree Robotics. 
+                            From academic research to industrial automation, we provide the 
+                            hardware, software integration, and domestic support you need.
+                        </p>
+                        <Button className="rounded-full bg-yellow-500 text-black hover:bg-yellow-400 h-14 px-10 font-bold text-lg transition-transform hover:scale-105">
+                            Speak to an expert
+                        </Button>
+                    </div>
+                    <div className="flex-1 w-full relative">
+                         <div className="aspect-video rounded-2xl overflow-hidden border border-zinc-800 relative group">
+                            <img 
+                                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800" 
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                                alt="Demo video" 
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
+                                    <PlayCircle size={40} className="text-white" />
+                                </div>
+                            </div>
+                         </div>
                     </div>
                 </div>
-
-            </main>
+            </section>
         </div>
     );
 }
