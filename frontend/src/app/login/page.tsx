@@ -42,9 +42,12 @@ export default function LoginPage() {
 
       // 2. Hydrate the global Zustand store with the user's profile
       setAdminUser({
-        email: email,
-        role: data.role || "admin",
-      });
+        token: data.access_token,
+        email: data.email,
+        role: data.role,
+        name: data.name,
+        username: data.username
+    });
 
       // 3. Trigger the navigation
       router.refresh(); // Forces Next.js to acknowledge the new cookie for Server Components

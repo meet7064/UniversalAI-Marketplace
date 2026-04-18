@@ -76,8 +76,11 @@ async def login(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database
     }
     access_token = create_access_token(data=token_data)
     
-    # 4. Return the token and role (Matches the TokenResponse schema)
+    # 4. Return EVERYTHING the frontend needs!
     return TokenResponse(
         access_token=access_token, 
-        role=db_user.get("role", "customer")
+        role=db_user.get("role", "customer"),
+        email=db_user.get("email", ""),
+        name=db_user.get("name", ""),         # <--- NOW THE FRONTEND CAN SEE THIS
+        username=db_user.get("username", "")  # <--- AND THIS
     )

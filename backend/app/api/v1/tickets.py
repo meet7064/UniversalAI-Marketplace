@@ -35,11 +35,32 @@ async def create_ticket(ticket: TicketCreate, db: AsyncIOMotorDatabase = Depends
     return format_mongo_doc(created_ticket)
 
 # 2. Get All Tickets (For the Admin Kanban Board)
+# @router.get("/", response_model=list[TicketResponse])
+# async def get_tickets(db: AsyncIOMotorDatabase = Depends(get_database)):
+#     cursor = db["tickets"].find({}).sort("created_at", -1)
+#     tickets = await cursor.to_list(length=200)
+#     return [format_mongo_doc(t) for t in tickets]
+
+# 2. Get All Tickets (For the Admin Kanban Board)
 @router.get("/", response_model=list[TicketResponse])
 async def get_tickets(db: AsyncIOMotorDatabase = Depends(get_database)):
-    cursor = db["tickets"].find({}).sort("created_at", -1)
-    tickets = await cursor.to_list(length=200)
-    return [format_mongo_doc(t) for t in tickets]
+    try:
+        cursor = db["tickets"].find({}).sort("created_at", -1)
+        tickets = await cursor.to_list(length=200)
+        
+        safe_tickets = []
+        for t in tickets:
+            # Safeguard: Inject a fake ticket number if it's missing from old DB entries
+            if "ticket_number" not in t:
+                t["ticket_number"] = f"SRV-LEGACY-{str(t['_id'])[-4:].upper()}"
+                
+            safe_tickets.append(format_mongo_doc(t))
+            
+        return safe_tickets
+    except Exception as e:
+        # Print the exact error to your python terminal so you can see what failed
+        print(f"Error fetching tickets: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch tickets")
 
 # 3. Update a Ticket (Used when dragging/dropping columns in Kanban)
 @router.patch("/{ticket_id}", response_model=TicketResponse)

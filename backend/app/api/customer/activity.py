@@ -16,7 +16,7 @@ async def update_heartbeat(
     to tell the Admin dashboard this user is online.
     """
     # Update this user's last_active timestamp to RIGHT NOW
-    await db["users"].update_one(
+    await db["customer"].update_one(
         {"email": current_user["email"]},
         {"$set": {"last_active": datetime.now(timezone.utc)}}
     )

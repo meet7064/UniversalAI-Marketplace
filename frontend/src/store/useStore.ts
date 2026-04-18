@@ -15,8 +15,10 @@ export interface CartItem {
     name: string;
     price: number;
     category: string; // e.g., "Buy", "Rent", "Accessory"
-    image_url?: string;
+    image?: string;   // UPDATED: Changed from image_url to match the CartPage UI
     quantity: number; 
+    rentDuration?: number; 
+    rentPeriod?: string;
 }
 
 interface AppState {
@@ -28,7 +30,8 @@ interface AppState {
 
     // 2. Cart State
     cart: CartItem[];
-    addToCart: (item: Omit<CartItem, "quantity">) => void;
+    // UPDATED: Makes quantity optional. Defaults to 1, but allows bulk adds.
+    addToCart: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, quantity: number) => void;
     clearCart: () => void;
@@ -51,25 +54,26 @@ export const useStore = create<AppState>()(
             logout: () => set({ 
                 user: null, 
                 isAuthenticated: false,
-                cart: [] // Optional: clear cart when they log out for security
+                cart: [] // Clear cart when they log out for security
             }),
 
             // --- CART LOGIC ---
             cart: [],
             
             addToCart: (item) => set((state) => {
+                const quantityToAdd = item.quantity || 1; // Default to 1 if not provided
                 const existingItem = state.cart.find((c) => c.id === item.id);
                 
                 if (existingItem) {
-                    // If it's already in the cart, just increase the quantity
+                    // If it's already in the cart, increase the quantity safely
                     return {
                         cart: state.cart.map((c) =>
-                            c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c
+                            c.id === item.id ? { ...c, quantity: c.quantity + quantityToAdd } : c
                         ),
                     };
                 }
-                // Otherwise, add it as a new item with quantity 1
-                return { cart: [...state.cart, { ...item, quantity: 1 }] };
+                // Otherwise, add it as a new item
+                return { cart: [...state.cart, { ...item, quantity: quantityToAdd }] };
             }),
 
             removeFromCart: (id) => set((state) => ({
@@ -90,10 +94,14 @@ export const useStore = create<AppState>()(
             }
         }),
         {
-            name: "vshop-client-state", // The key it will use in localStorage
+            name: "robostore-client-state", // The key it will use in localStorage
             storage: createJSONStorage(() => localStorage), 
             // We only persist the user and the cart. Functions aren't persisted.
-            partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, cart: state.cart }),
+            partialize: (state) => ({ 
+                user: state.user, 
+                isAuthenticated: state.isAuthenticated, 
+                cart: state.cart 
+            }),
         }
     )
 );

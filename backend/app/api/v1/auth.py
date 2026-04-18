@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/register_admin", status_code=status.HTTP_201_CREATED)
 async def register_admin(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
     # 1. Check if user already exists
-    existing_user = await db["users"].find_one({"email": user.email})
+    existing_user = await db["vendors"].find_one({"email": user.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -23,13 +23,13 @@ async def register_admin(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get
         "role": "admin"  # Hardcoded to admin for this example
     }
     
-    await db["users"].insert_one(new_user)
+    await db["vendors"].insert_one(new_user)
     return {"message": "Admin user created successfully"}
 
 @router.post("/login_admin", response_model=TokenResponse)
 async def admin_login(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_database)):
     # 1. Find user in database
-    db_user = await db["users"].find_one({"email": user.email})
+    db_user = await db["vendors"].find_one({"email": user.email})
     
     # 2. Verify existence and password match
     if not db_user or not verify_password(user.password, db_user["password"]):
@@ -48,5 +48,8 @@ async def admin_login(user: UserLogin, db: AsyncIOMotorDatabase = Depends(get_da
     # 4. Return the token to Next.js
     return TokenResponse(
         access_token=access_token, 
-        role=db_user.get("role", "customer")
+        role=db_user.get("role", "admin"), # Assuming it defaults to admin here
+        email=db_user.get("email", ""),
+        name=db_user.get("name", "Admin"), # Fallback if admin has no name set
+        username=db_user.get("username", "admin")
     )

@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.api.v1 import auth, fleet, tickets, accessories, analytics, appraisal, activity, users
+from app.api.v1 import auth, fleet, tickets, accessories, analytics, appraisal, activity, users, admin_orders, dispatch
 from app.api.shared import customer_auth
-from app.api.public import catalog
+from app.api.public import catalog, accessories, repair, profile, checkout, orders
 # from app.api.customer import activity
 from app.core.config import settings
 from app.db.mongodb import connect_to_mongo, close_mongo_connection
@@ -45,10 +45,17 @@ app.include_router(analytics.router, prefix="/api/admin/analytics", tags=["Dashb
 app.include_router(appraisal.router, prefix="/api/appraisal", tags=["Appraisal Engine"])
 app.include_router(activity.router, prefix="/api/admin/activity", tags=["User Activity"])
 app.include_router(users.router, prefix="/api/admin/users", tags=["Track Users"])
+app.include_router(admin_orders.router, prefix="/api/admin/orders", tags=["Admin Orders"])
+app.include_router(dispatch.router, prefix="/api/admin/dispatch", tags=["Dispatch Management"])
 
 #User PATHS
 app.include_router(customer_auth.router, prefix="/api/user/customer_auth", tags=["Customer Authentication"])
 app.include_router(catalog.router, prefix="/api/public/catalog", tags=["Public Storefront"])
+app.include_router(accessories.router, prefix="/api/public/accessories", tags=["Public Accessories"])
+app.include_router(repair.router, prefix="/api/public/repair", tags=["Public Repair"])
+app.include_router(profile.router, prefix="/api/public/profile", tags=["Public Profile"])
+app.include_router(checkout.router, prefix="/api/public/checkout", tags=["Checkout"])
+app.include_router(orders.router, prefix="/api/customer/orders", tags=["Customer Orders"])
 # app.include_router(activity.router, prefix="/api/customer/activity", tags=["Customer Activity"])
 
 

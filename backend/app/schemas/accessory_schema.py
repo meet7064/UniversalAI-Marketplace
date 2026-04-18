@@ -28,3 +28,4 @@ class AccessoryResponse(AccessoryCreate):
     created_at: datetime
     image_url: Optional[str] = None
     images: Optional[List[str]] = [] # NEW
+    status: Optional[str] = None

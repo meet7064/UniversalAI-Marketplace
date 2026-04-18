@@ -31,27 +31,25 @@ export default function FleetOverviewPage() {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // NEW: Added the activity pulse API to the Promise.all array
+                // Safely catch errors on EVERY fetch so one failure doesn't crash the rest
                 const [fleetRes, ticketsRes, pulseRes] = await Promise.all([
-                    fetch("http://127.0.0.1:8000/api/admin/fleet"),
-                    fetch("http://127.0.0.1:8000/api/service/tickets/"),
-                    fetch("http://127.0.0.1:8000/api/admin/activity").catch(() => null) // Catch in case endpoint isn't up yet
+                    fetch("http://127.0.0.1:8000/api/admin/fleet").catch(() => null),
+                    fetch("http://127.0.0.1:8000/api/service/tickets/").catch(() => null),
+                    fetch("http://127.0.0.1:8000/api/admin/activity").catch(() => null) 
                 ]);
 
-                if (fleetRes.ok && ticketsRes.ok) {
+                if (fleetRes && fleetRes.ok) {
                     const fleetData = await fleetRes.json();
-                    const ticketsData = await ticketsRes.json();
-
-                    // Calculate Total Fleet Value
                     const totalValue = fleetData.reduce((sum: number, robot: any) => sum + (Number(robot.price) || 0), 0);
                     setFleetValue(totalValue);
+                }
 
-                    // Calculate Open Tickets
+                if (ticketsRes && ticketsRes.ok) {
+                    const ticketsData = await ticketsRes.json();
                     const unresolved = ticketsData.filter((t: any) => t.status !== "Ready").length;
                     setOpenTickets(unresolved);
                 }
 
-                // NEW: Set the live active users
                 if (pulseRes && pulseRes.ok) {
                     const pulseData = await pulseRes.json();
                     setActiveUsers(pulseData);
@@ -65,8 +63,6 @@ export default function FleetOverviewPage() {
         };
 
         fetchDashboardData();
-        
-        // Optional: Refresh the pulse every 30 seconds to watch users move around!
         const interval = setInterval(fetchDashboardData, 30000);
         return () => clearInterval(interval);
     }, []);

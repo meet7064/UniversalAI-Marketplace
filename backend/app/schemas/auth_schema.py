@@ -10,6 +10,9 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: str
+    email: str     # <--- ADD THIS
+    name: str      # <--- ADD THIS
+    username: str  # <--- ADD THIS
 
 class UserCreate(BaseModel):
     name: str

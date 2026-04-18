@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
-    Cpu, ShoppingCart, ShieldCheck, ArrowLeft, Box, Activity, ChevronRight, Zap
+    Cpu, ShoppingCart, ShieldCheck, ArrowLeft, Box, Activity, ChevronRight, Zap, CalendarClock 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useStore } from "@/store/useStore";
 
 export default function AssetDetailPage() {
@@ -20,6 +21,9 @@ export default function AssetDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeImage, setActiveImage] = useState<string>("");
     const [gallery, setGallery] = useState<string[]>([]);
+
+    const [rentDuration, setRentDuration] = useState<number>(1);
+    const [rentPeriod, setRentPeriod] = useState<string>("Months");
 
     useEffect(() => {
         const fetchAsset = async () => {
@@ -55,11 +59,26 @@ export default function AssetDetailPage() {
         }
 
         addToCart({
-            id: robot.id, name: robot.name, price: Number(robot.price),
-            category: robot.category, image_url: robot.image_url
+            id: robot.id, 
+            name: robot.name, 
+            price: Number(robot.price),
+            category: robot.category, 
+            image: robot.image_url,
+            rentDuration: robot.category === "Rent" ? rentDuration : undefined,
+            rentPeriod: robot.category === "Rent" ? rentPeriod : undefined,
         });
         alert(`${robot.name} added to cart!`);
     };
+
+    // --- NEW: DYNAMIC RENTAL MATH ---
+    const getRentalMultiplier = (period: string) => {
+        if (period === "Days") return 1 / 30; // Pro-rate by day
+        if (period === "Years") return 12;    // Multiply by 12 months
+        return 1;                             // Default to monthly
+    };
+
+    const multiplier = getRentalMultiplier(rentPeriod);
+    const totalContractValue = robot?.price ? (robot.price * multiplier * rentDuration) : 0;
 
     if (isLoading) return <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-zinc-500"><div className="h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div></div>;
     if (!robot || robot.error) return <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center text-zinc-500"><h1 className="text-2xl font-bold text-white mb-2">Asset Not Found</h1></div>;
@@ -77,7 +96,6 @@ export default function AssetDetailPage() {
             <main className="max-w-7xl mx-auto px-6 py-12">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     
-                    {/* LEFT COLUMN: Gallery & 3D */}
                     <div className="space-y-6">
                         <div className="aspect-square bg-zinc-950 border border-zinc-800/60 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-2xl">
                             {activeImage ? <img src={activeImage} alt={robot.name} className="w-full h-full object-cover" /> : <Cpu size={120} className="text-zinc-800" />}
@@ -103,7 +121,6 @@ export default function AssetDetailPage() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Specs & Features */}
                     <div className="flex flex-col">
                         <div className="mb-6">
                             <Badge variant="outline" className="bg-zinc-900 text-zinc-300 border-zinc-700 mb-4 uppercase tracking-widest text-xs font-bold px-3 py-1">{robot.brand}</Badge>
@@ -119,7 +136,6 @@ export default function AssetDetailPage() {
                             </div>
                         </div>
 
-                        {/* NEW: Dynamic Key Features Section (Matches Screenshot Layout) */}
                         {robot.key_features && robot.key_features.length > 0 && (
                             <div className="mb-10 pt-6 border-t border-zinc-800/60">
                                 <h3 className="text-xl font-bold text-white mb-5">Key Features</h3>
@@ -139,7 +155,6 @@ export default function AssetDetailPage() {
                             </div>
                         )}
 
-                        {/* Default Technical Specs Grid */}
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10 pt-6 border-t border-zinc-800/60">
                             <div className="bg-zinc-950 border border-zinc-800/60 rounded-xl p-4">
                                 <p className="text-xs text-zinc-500 uppercase font-bold mb-1">Payload</p>
@@ -157,11 +172,47 @@ export default function AssetDetailPage() {
                             </div>
                         </div>
 
-                        {/* Pricing & Cart Action */}
+                        {robot.category === "Rent" && (
+                            <div className="bg-blue-900/10 border border-blue-500/20 rounded-2xl p-6 mb-8">
+                                <h3 className="text-lg font-bold text-blue-400 flex items-center gap-2 mb-4">
+                                    <CalendarClock size={20} /> Configure Rental Period
+                                </h3>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Duration</label>
+                                        <Input 
+                                            type="number" 
+                                            min="1" 
+                                            value={rentDuration} 
+                                            onChange={(e) => setRentDuration(Math.max(1, Number(e.target.value)))}
+                                            className="bg-zinc-950 border-zinc-800 text-white h-12 text-lg font-bold"
+                                        />
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Timeframe</label>
+                                        <select 
+                                            value={rentPeriod}
+                                            onChange={(e) => setRentPeriod(e.target.value)}
+                                            className="w-full bg-zinc-950 border border-zinc-800 rounded-md text-white h-12 px-3 outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="Days">Days</option>
+                                            <option value="Months">Months</option>
+                                            <option value="Years">Years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-4 border-t border-blue-500/20 flex items-center justify-between">
+                                    {/* USE THE DYNAMIC CALCULATION HERE WITH FIXED DECIMALS */}
+                                    <span className="text-sm text-zinc-300">Total Contract Value: <span className="font-mono font-bold text-white">${totalContractValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+                                    <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30">20% Due at Checkout</Badge>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="mt-auto bg-zinc-950 border border-zinc-800/60 rounded-2xl p-6 sm:p-8">
                             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-4">
                                 <div>
-                                    <p className="text-sm text-zinc-500 uppercase font-bold tracking-wider mb-2">{robot.category === "Rent" ? "Monthly Leasing Rate" : "Direct Purchase Price"}</p>
+                                    <p className="text-sm text-zinc-500 uppercase font-bold tracking-wider mb-2">{robot.category === "Rent" ? "Base Monthly Leasing Rate" : "Direct Purchase Price"}</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-5xl font-black text-white tracking-tighter">${Number(robot.price).toLocaleString()}</span>
                                         {robot.category === "Rent" && <span className="text-zinc-500 font-medium">/ mo</span>}

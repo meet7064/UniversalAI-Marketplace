@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-    Search, Filter, Cpu, ArrowRight, ShoppingCart, Zap, ShieldCheck 
+    Search, Filter, Cpu, ArrowRight, ShoppingCart, Zap, ShieldCheck, CheckCircle2 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useStore } from "@/store/useStore"; // The Global Brain!
+import { useStore } from "@/store/useStore"; 
 import { useRouter } from "next/navigation";
 
 export default function MarketplacePage() {
@@ -17,12 +17,11 @@ export default function MarketplacePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCategory, setActiveCategory] = useState("All");
     const router = useRouter();
-    // Pull the addToCart function from Zustand
-    const addToCart = useStore((state) => state.addToCart);
-    const isAuthenticated = useStore((state) => state.isAuthenticated);
     
+    const addToCart = useStore((state) => state.addToCart);
+    
+    const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
 
-    // Fetch the live inventory from your new public catalog API
     useEffect(() => {
         const fetchPublicFleet = async () => {
             try {
@@ -41,7 +40,6 @@ export default function MarketplacePage() {
         fetchPublicFleet();
     }, []);
 
-    // Safe Filter logic
     const filteredFleet = fleet.filter(robot => {
         const safeName = robot.name || "";
         const safeBrand = robot.brand || "";
@@ -54,32 +52,24 @@ export default function MarketplacePage() {
         return matchesSearch && matchesCategory;
     });
 
-    // Handler for adding to cart
     const handleAddToCart = (robot: any) => {
-
-        // THE GATEKEEPER: If they aren't logged in, send them to the Auth page!
-        if (!isAuthenticated) {
-            alert("Please log in or create an account to purchase hardware.");
-            router.push("/auth");
-            return; // Stop the function here
-        }
-        
         addToCart({
             id: robot.id,
             name: robot.name,
             price: Number(robot.price),
             category: robot.category,
-            image_url: robot.image_url
+            image: robot.image_url 
         });
         
-        // Optional: You could add a toast notification here!
-        // alert(`${robot.name} added to cart!`);
+        setAddedItems(prev => ({ ...prev, [robot.id]: true }));
+        setTimeout(() => {
+            setAddedItems(prev => ({ ...prev, [robot.id]: false }));
+        }, 2000);
     };
 
     return (
         <div className="flex-1 bg-[#09090b] text-zinc-100">
             
-            {/* HEADER */}
             <div className="bg-zinc-950 border-b border-zinc-800/60 py-12">
                 <div className="max-w-7xl mx-auto px-6">
                     <h1 className="text-4xl font-bold tracking-tight text-white mb-4">Hardware Marketplace</h1>
@@ -91,7 +81,6 @@ export default function MarketplacePage() {
 
             <main className="max-w-7xl mx-auto px-6 py-12">
                 
-                {/* TOOLBAR (Search & Filters) */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800/60">
                     <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                         {["All", "Buy", "Rent"].map(cat => (
@@ -121,7 +110,6 @@ export default function MarketplacePage() {
                     </div>
                 </div>
 
-                {/* LOADING STATE */}
                 {isLoading && (
                     <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
                         <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -129,13 +117,11 @@ export default function MarketplacePage() {
                     </div>
                 )}
 
-                {/* ROBOT GRID */}
                 {!isLoading && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredFleet.map((robot) => (
                             <div key={robot.id} className="bg-zinc-950 border border-zinc-800/60 rounded-2xl overflow-hidden hover:border-zinc-700 transition-all hover:shadow-[0_0_30px_rgba(59,130,246,0.05)] group flex flex-col">
                                 
-                                {/* Image Area */}
                                 <div className="relative h-64 bg-zinc-900 flex items-center justify-center border-b border-zinc-800/60 overflow-hidden">
                                     {robot.image_url ? (
                                         <img src={`http://127.0.0.1:8000${robot.image_url}`} alt={robot.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -158,15 +144,12 @@ export default function MarketplacePage() {
                                     </div>
                                 </div>
 
-                                {/* Content Area */}
                                 <div className="p-6 flex-1 flex flex-col">
                                     <h3 className="text-2xl font-bold text-zinc-100 mb-1">{robot.name || "Unknown Model"}</h3>
                                     <p className="text-sm text-zinc-500 mb-6 flex items-center gap-1.5 font-medium">
                                         <ShieldCheck size={16} className="text-emerald-500" /> Multi-point Certified
                                     </p>
 
-                                    {/* Specs Grid */}
-                                    {/* Default Specs Grid */}
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div className="bg-zinc-900/50 rounded-xl p-3 border border-zinc-800/50">
                                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mb-1">Payload</p>
@@ -178,7 +161,6 @@ export default function MarketplacePage() {
                                         </div>
                                     </div>
 
-                                    {/* NEW: Dynamic Key Features Preview */}
                                     {robot.key_features && robot.key_features.length > 0 ? (
                                         <div className="flex flex-wrap gap-2 mb-6 mt-1">
                                             {robot.key_features.slice(0, 3).map((feature: any, idx: number) => (
@@ -194,10 +176,9 @@ export default function MarketplacePage() {
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="mb-6"></div> /* Spacer for alignment */
+                                        <div className="mb-6"></div> 
                                     )}
 
-                                    {/* Price & Actions */}
                                     <div className="mt-auto flex items-end justify-between">
                                         <div>
                                             <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold mb-1">
@@ -210,15 +191,27 @@ export default function MarketplacePage() {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-zinc-800/60">
-                                        <Button 
-                                            variant="outline" 
-                                            className="w-full bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"
-                                            onClick={() => handleAddToCart(robot)}
-                                        >
-                                            <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                                        </Button>
+                                        {/* NEW: Rental Check for Buttons */}
+                                        {robot.category === "Rent" ? (
+                                            <Link href={`/asset/${robot.id}`} className="w-full">
+                                                <Button variant="outline" className="w-full bg-zinc-900 border-zinc-700 text-blue-400 hover:bg-zinc-800">
+                                                    Configure Rental
+                                                </Button>
+                                            </Link>
+                                        ) : (
+                                            <Button 
+                                                variant="outline" 
+                                                className={`w-full transition-all duration-300 ${addedItems[robot.id] ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300" : "bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800"}`}
+                                                onClick={() => handleAddToCart(robot)}
+                                            >
+                                                {addedItems[robot.id] ? (
+                                                    <><CheckCircle2 className="mr-2 h-4 w-4" /> Added!</>
+                                                ) : (
+                                                    <><ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart</>
+                                                )}
+                                            </Button>
+                                        )}
                                         
-                                        {/* Link to the Product Detail Page */}
                                         <Link href={`/asset/${robot.id}`}>
                                             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-900/20">
                                                 Specs <ArrowRight className="ml-2 h-4 w-4" />
@@ -231,7 +224,6 @@ export default function MarketplacePage() {
                     </div>
                 )}
 
-                {/* EMPTY STATE */}
                 {!isLoading && filteredFleet.length === 0 && (
                     <div className="text-center py-24 text-zinc-500 border-2 border-dashed border-zinc-800/50 rounded-3xl bg-zinc-950/50">
                         <Search className="mx-auto h-12 w-12 text-zinc-700 mb-4" />

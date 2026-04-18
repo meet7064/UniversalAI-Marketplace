@@ -15,12 +15,12 @@ export default function AuthPage() {
     const [isLoginView, setIsLoginView] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-    
-    const [formData, setFormData] = useState({ 
-        name: "", 
-        username: "", 
-        email: "", 
-        password: "" 
+
+    const [formData, setFormData] = useState({
+        name: "",
+        username: "",
+        email: "",
+        password: ""
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +29,7 @@ export default function AuthPage() {
         setError("");
 
         const endpoint = isLoginView ? "/api/user/customer_auth/login" : "/api/user/customer_auth/register";
-        
+
         try {
             const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
                 method: "POST",
@@ -47,13 +47,13 @@ export default function AuthPage() {
                 // Decode the JWT slightly just to grab the name/username if needed, 
                 // OR rely on what you know from the login payload.
                 // Since your TokenResponse returns the token and role, we pass that to Zustand.
-                
+
                 login({
-                    name: "User", // You can decode the JWT here to get the real name, or update backend to return it
-                    username: formData.email.split("@")[0], 
-                    email: formData.email,
+                    token: data.access_token, // Make sure this matches your Python response!
+                    email: data.email,
                     role: data.role,
-                    token: data.access_token
+                    name: data.name,
+                    username: data.username
                 });
                 document.cookie = `universalAI_marketplace_token=${data.access_token}; path=/; max-age=604800; SameSite=Lax`;
                 router.push("/"); // Send them to the marketplace
@@ -64,7 +64,7 @@ export default function AuthPage() {
                 alert("Account created! Please sign in.");
             }
         } catch (err: any) {
-            setError(err.message); 
+            setError(err.message);
         } finally {
             setIsLoading(false);
         }
@@ -80,7 +80,7 @@ export default function AuthPage() {
                         <Cpu className="text-white" size={24} />
                     </div>
                 </div>
-                
+
                 <h2 className="text-2xl font-bold text-center mb-2">
                     {isLoginView ? "Welcome back to V_Shop" : "Join the Robotics Economy"}
                 </h2>
@@ -96,22 +96,22 @@ export default function AuthPage() {
                         <>
                             <div className="space-y-2">
                                 <Label className="text-zinc-300">Full Name</Label>
-                                <Input required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="Meet Panchal" />
+                                <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="Meet Panchal" />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-zinc-300">Username</Label>
-                                <Input required value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="robotics_expert" />
+                                <Input required value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="robotics_expert" />
                             </div>
                         </>
                     )}
-                    
+
                     <div className="space-y-2">
                         <Label className="text-zinc-300">Email Address</Label>
-                        <Input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="engineer@company.com" />
+                        <Input required type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="engineer@company.com" />
                     </div>
                     <div className="space-y-2">
                         <Label className="text-zinc-300">Password</Label>
-                        <Input required type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="••••••••" />
+                        <Input required type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="bg-zinc-900 border-zinc-800 focus-visible:ring-blue-500" placeholder="••••••••" />
                     </div>
 
                     <Button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 mt-4">
